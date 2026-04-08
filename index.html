@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Draksyon Anime</title>
+    <style>
+        body { background: #0f172a; color: white; font-family: sans-serif; margin: 0; padding: 20px; }
+        .card { background: #1e293b; padding: 20px; border-radius: 15px; display: flex; gap: 20px; border-left: 5px solid #ef4444; }
+        .card img { width: 150px; border-radius: 10px; object-fit: cover; }
+        .generos span { background: #ef4444; padding: 3px 8px; border-radius: 5px; font-size: 12px; margin-right: 5px; display: inline-block; margin-bottom: 5px; }
+        .sinopse { color: #94a3b8; font-size: 14px; margin-top: 10px; line-height: 1.5; }
+        .grid-eps { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin-top: 20px; }
+        .ep-link { background: #334155; color: #f1f5f9; padding: 12px; text-decoration: none; text-align: center; border-radius: 8px; font-size: 13px; font-weight: bold; border: 1px solid #475569; }
+        .ep-link:hover { background: #ef4444; }
+        #status { color: #ef4444; text-align: center; margin-top: 50px; font-weight: bold; }
+        .topbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 20px; }
+        .topbar input { flex: 1; min-width: 240px; background: #1e293b; color: white; border: 1px solid #334155; border-radius: 10px; padding: 12px; }
+        .topbar button { background: #ef4444; color: white; border: 0; border-radius: 10px; padding: 12px 16px; font-weight: bold; cursor: pointer; }
+        .topbar button:hover { filter: brightness(1.05); }
+        .muted { color: #94a3b8; font-size: 12px; margin-bottom: 16px; }
+        @media (max-width: 700px) { .card { flex-direction: column; } .card img { width: 100%; max-width: 220px; } }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <input id="slug" type="text" value="kimetsu-no-yaiba-todos-os-episodios" placeholder="slug do anime">
+        <button id="btnBuscar">Buscar</button>
+    </div>
+
+    <div class="muted">Exemplo: kimetsu-no-yaiba-todos-os-episodios</div>
+    <div id="status">Carregando...</div>
+
+    <div id="app" style="display:none">
+        <div class="card">
+            <img id="capa" src="" alt="Capa do anime">
+            <div>
+                <h1 id="titulo" style="margin:0"></h1>
+                <div id="generos" class="generos" style="margin: 10px 0;"></div>
+                <div id="sinopse" class="sinopse"></div>
+            </div>
+        </div>
+
+        <h3>Episódios (<span id="total-eps">0</span>)</h3>
+        <div id="lista-eps" class="grid-eps"></div>
+    </div>
+
+    <script>
+        async function carregar() {
+            const statusEl = document.getElementById('status');
+            const appEl = document.getElementById('app');
+            const slug = document.getElementById('slug').value.trim() || 'kimetsu-no-yaiba-todos-os-episodios';
+
+            statusEl.style.display = 'block';
+            statusEl.innerHTML = 'Carregando...';
+            appEl.style.display = 'none';
+
+            try {
+                const res = await fetch(`/api/anime?url=${encodeURIComponent(slug)}`);
+                const data = await res.json();
+
+                if (!res.ok) {
+                    throw new Error(data.erro || 'Falha ao carregar os dados.');
+                }
+
+                document.getElementById('titulo').innerText = data.titulo || 'Sem título';
+                document.getElementById('capa').src = data.capa || '';
+                document.getElementById('sinopse').innerText = data.sinopse || 'Sem sinopse disponível.';
+                document.getElementById('total-eps').innerText = Array.isArray(data.episodios) ? data.episodios.length : 0;
+
+                const genDiv = document.getElementById('generos');
+                genDiv.innerHTML = '';
+                (data.generos || []).forEach(g => {
+                    genDiv.innerHTML += `<span>${g}</span>`;
+                });
+
+                const epsDiv = document.getElementById('lista-eps');
+                epsDiv.innerHTML = '';
+                (data.episodios || []).forEach((ep, index) => {
+                    const numero = ep.nome ? (ep.nome.match(/\d+/g)?.join('') || String(index + 1)) : String(index + 1);
+                    const link = ep.link || '#';
+                    epsDiv.innerHTML += `<a href="${link}" target="_blank" rel="noopener noreferrer" class="ep-link">EPISÓDIO ${numero}</a>`;
+                });
+
+                statusEl.style.display = 'none';
+                appEl.style.display = 'block';
+            } catch (err) {
+                statusEl.innerHTML = err.message || 'Erro ao carregar.';
+            }
+        }
+
+        document.getElementById('btnBuscar').addEventListener('click', carregar);
+        document.getElementById('slug').addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') carregar();
+        });
+
+        carregar();
+    </script>
+</body>
+</html>
