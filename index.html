@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Draksyon Anime</title>
+    <style>
+        body { background: #0f172a; color: white; font-family: sans-serif; margin: 0; padding: 20px; }
+        .card { background: #1e293b; padding: 20px; border-radius: 15px; display: flex; gap: 20px; border-left: 5px solid #ef4444; }
+        .card img { width: 150px; border-radius: 10px; object-fit: cover; }
+        .generos span { background: #ef4444; padding: 3px 8px; border-radius: 5px; font-size: 12px; margin-right: 5px; }
+        .sinopse { color: #94a3b8; font-size: 14px; margin-top: 10px; line-height: 1.5; }
+        .grid-eps { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin-top: 20px; }
+        .ep-link { background: #334155; color: #f1f5f9; padding: 12px; text-decoration: n ; text-align: center; border-radius: 8px; font-size: 13px; font-weight: bold; border: 1px solid #475569; }
+        .ep-link:hover { background: #ef4444; }
+        #status { color: #ef4444; text-align: center; margin-top: 50px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div id="status">Carregando dados do Termux...</div>
+
+    <div id="app" style="display:none">
+        <div class="card">
+            <img id="capa" src="">
+            <div>
+                <h1 id="titulo" style="margin:0"></h1>
+                <div id="generos" class="generos" style="margin: 10px 0;"></div>
+                <div id="sinopse" class="sinopse"></div>
+            </div>
+        </div>
+
+        <h3>Episódios (<span id="total-eps">0</span>)</h3>
+        <div id="lista-eps" class="grid-eps"></div>
+    </div>
+
+    <script>
+        async function carregar() {
+            try {
+                // Tenta conectar no Termux (porta 3000)
+                const res = await fetch('http://127.0.0.1:3000/api/anime?url=kimetsu-no-yaiba-todos-os-episodios');
+                const data = await res.json();
+
+                document.getElementById('titulo').innerText = data.titulo;
+                document.getElementById('capa').src = data.capa;
+                document.getElementById('sinopse').innerText = data.sinopse;
+                document.getElementById('total-eps').innerText = data.episodios.length;
+
+                const genDiv = document.getElementById('generos');
+                data.generos.forEach(g => genDiv.innerHTML += `<span>${g}</span>`);
+
+                const epsDiv = document.getElementById('lista-eps');
+                data.episodios.forEach(ep => {
+                    epsDiv.innerHTML += `<a href="${ep.link}" class="ep-link">EPISÓDIO ${ep.nome.replace(/\D/g, "") || "?"}</a>`;
+                });
+
+                document.getElementById('status').style.display = 'none';
+                document.getElementById('app').style.display = 'block';
+
+            } catch (err) {
+                document.getElementById('status').innerHTML = "SERVIDOR OFFLINE!<br>Abra o Termux e digite: node server.js";
+            }
+        }
+        carregar();
+    </script>
+</body>
+</html>
